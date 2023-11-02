@@ -4,14 +4,17 @@ import { getQuestionsSchema } from "@/schemas/questions";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-async function delay(ms: number | undefined) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export async function POST(req: Request, res: Response) {
   try {
     const session = await getAuthSession();
-
+    // if (!session?.user) {
+    //   return NextResponse.json(
+    //     { error: "You must be logged in to create a game." },
+    //     {
+    //       status: 401,
+    //     }
+    //   );
+    // }
     const body = await req.json();
     const { amount, topic, type } = getQuestionsSchema.parse(body);
     let questions: any;
@@ -19,7 +22,7 @@ export async function POST(req: Request, res: Response) {
       questions = await strict_output(
         "You are a helpful AI that is able to generate a pair of question and answers, the length of each answer should not be more than 15 words, store all the pairs of answers and questions in a JSON array",
         new Array(amount).fill(
-          `You are to generate a random hard open-ended questions about ${topic}`,
+          `You are to generate a random hard open-ended questions about ${topic}`
         ),
         {
           question: "question",
@@ -28,9 +31,9 @@ export async function POST(req: Request, res: Response) {
       );
     } else if (type === "mcq") {
       questions = await strict_output(
-        "You are a helpful AI that is able to generate multiple choice questions and answers, the length of each answer should not be more than 15 words, store all answers and questions and options in a JSON array",
+        "You are a helpful AI that is able to generate mcq questions and answers, the length of each answer should not be more than 15 words, store all answers and questions and options in a JSON array",
         new Array(amount).fill(
-          `You are to generate a random hard multiple choice question about ${topic}`,
+          `You are to generate a random hard mcq question about ${topic}`
         ),
         {
           question: "question",
@@ -41,13 +44,9 @@ export async function POST(req: Request, res: Response) {
         }
       );
     }
-    
-    // Introduce a delay (e.g., 1 second) between API requests to avoid rate limits
-    await delay(1000);
-
     return NextResponse.json(
       {
-        questions,
+        questions: questions,
       },
       {
         status: 200,
